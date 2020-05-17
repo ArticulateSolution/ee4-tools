@@ -1,0 +1,94 @@
+#!/bin/bash
+
+## Backup all WordOps websites and upload them to Amazon S3
+
+main() {
+
+	## Load Configuration
+	if [[ -r ~/.backup_sites_mysql_s3.conf ]] ; then
+		. ~/.backup_sites_mysql_s3.conf
+		s3_mysql=s3://$bucket/$server_name/$backup_folder/db
+		s3_site=s3://$bucket/$server_name/$backup_folder/files
+		s3_config=s3://$bucket/$server_name/$backup_folder/config
+		s3_log=s3://$bucket/$server_name/log
+	else
+		echo "ERROR - Settings file not found or not readable."; exit 1
+	fi
+
+	## Prepare automated restore list
+	rlfilename=restorelist-`/bin/date -u +"%Y%m%dT%H%M%SZ"`
+	restorecmd=./wo-restore-site
+
+	for domain in $(wo site list | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sort)
+	do
+		echo "Working on: $domain"
+
+		### Determine site type
+		cfg=$(wo site info $domain | grep configuration)
+		if [[ $cfg =~ "wp wpredis" ]]; then
+			echo $restorecmd $domain --wpredis >> $tmp/$rlfilename
+		elif [[ $cfg =~ "wp basic" ]]; then
+			echo $restorecmd $domain --wp >> $tmp/$rlfilename
+		elif [[ $cfg =~ "wp wpfc" ]]; then
+			echo $restorecmd $domain --wpfc >> $tmp/$rlfilename
+		elif [[ $cfg =~ "mysql basic" ]]; then
+			echo $restorecmd $domain --mysql >> $tmp/$rlfilename
+		elif [[ $cfg =~ "php73 basic" ]]; then
+			echo $restorecmd $domain --php73 >> $tmp/$rlfilename
+		elif [[ $cfg =~ "php basic" ]]; then
+			## Same as --php72 for as of WordOps v3.9.7
+			echo $restorecmd $domain --php >> $tmp/$rlfilename
+		elif [[ $cfg =~ "html basic" ]]; then
+			echo $restorecmd $domain >> $tmp/$rlfilename
+		else
+			echo $restorecmd $domain >> $tmp/$rlfilename
+		fi
+
+		### Backup the site files
+		filename=$domain-`/bin/date -u +"%Y%m%dT%H%M%SZ"`
+		nice -n 19 tar --atime-preserve -czf $tmp/$filename.t$comp_ext --directory=/var/www/$domain .
+		aws s3 cp $s3options $tmp/$filename.t$comp_ext $s3_site/$domain/
+		aws s3 ls $s3_site/$domain/$filename.t$comp_ext
+		rm $tmp/$filename.t$comp_ext
+
+		### Backup the site database
+		tbl=`wo site info $domain | grep DB_NAME | awk '{print $2}'`
+		if [[ "$tbl" != "" ]]; then
+			filename=$domain-`/bin/date  -u +"%Y%m%dT%H%M%SZ"`.sql.$comp_ext
+			mysql_backup "$tbl" "$filename"
+			aws s3 cp $s3options $tmp/$filename $s3_mysql/$domain/
+			aws s3 ls $s3_mysql/$domain/$filename
+			rm $tmp/$filename
+		fi
+
+		### Archive the access log files
+		if ls /var/log/nginx/$domain.access.log-*.gz > /dev/null 2>&1; then
+			aws s3 mv $s3options /var/log/nginx/$domain.access.log-*.gz $s3_log/$domain/
+		fi
+	done
+
+	### Backup the site restore list
+	aws s3 cp $s3options $tmp/$rlfilename $s3_config/
+	echo Saving restore list.
+	aws s3 ls $s3_config/$rlfilename
+	cat $tmp/$rlfilename
+	rm $tmp/$rlfilename
+	echo Done
+}
+
+function mysql_backup {
+    # Backup the database
+    nice -n 19 mysqldump \
+        --no-create-db \
+    	--opt \
+    	--add-drop-table \
+    	-Q \
+    	-h $dbserver \
+    	-u $dbuser \
+    	-p$dbpassword \
+    	$1 | \
+    	$comp_pgm > \
+    	$tmp/$2
+}
+
+main "$@"

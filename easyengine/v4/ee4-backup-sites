@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Backup all web sites and upload them to Amazon S3
+
+main() {
+
+	# Load Configuration
+	if [[ -r ~/.ee4-backup-settings.conf ]] ; then
+		. ~/.ee4-backup-settings.conf
+	else
+		echo "ERROR - Settings file not found or not readable."; exit 1
+	fi
+
+	proxy_container=`docker ps | grep nginx-proxy | awk '{print $1}'`
+	rlfilename=restorelist-`/bin/date -u +"%Y%m%dT%H%M%SZ"`.sh
+
+	## Backup all web sites
+	for domain in `ee site list --format=text | sort`
+	do
+		echo Working on: $domain
+
+		## Prepare automated restore list
+		site_lessl=`ee site info $domain | grep 'SSL' | head -n 1 | awk -F '|' '{print $3}' | awk '{print $1}'`
+		site_wcssl=`ee site info $domain | grep 'Wildcard' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		site_cache=`ee site info $domain | grep 'Cache' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		site_email=`ee site info $domain | grep 'E-Mail' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		if [ $site_lessl == Enabled ]; then opt_lessl='--ssl=le'; else opt_lessl=''; fi
+		if [ $site_wcssl == Yes ];     then opt_wcssl='--wildcard'; else opt_wcssl=''; fi
+		if [ $site_cache == Enabled ]; then opt_cache='--cache'; else opt_cache=''; fi
+		echo ./ee4-restore-site --domain=$domain --type=wp $opt_cache $opt_lessl $opt_wcssl --admin-email=$site_email --s3_server_name=$server_name >> $tmp/$rlfilename
+
+		## Backup Database
+    ## determine if domain is using local or global db
+    db_container=`docker ps | grep "${domain//.}_db" | awk  '{print $1}'`
+    if [ -z "$db_container" ]
+    then
+    	db_container=`docker ps | grep services_global-db | awk  '{print $1}'`
+      echo "using global_db $db_container"
+    else
+      echo "using local_db $db_container"
+    fi
+
+		dbfilename=$domain-`/bin/date -u +"%Y%m%dT%H%M%SZ"`.sql
+		tmp=/tmp
+		## Note most credentials stored in /opt/easyengine/sites/example.com/.env
+		db_user=`ee site info $domain | grep 'DB User' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		db_password=`ee site info $domain | grep 'DB Password' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		db_host=`ee site info $domain | grep 'DB Host' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		db_name=`ee site info $domain | grep 'DB Name' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		## dump the datbase
+		docker exec $db_container bash -c "mysqldump --no-create-db --opt --add-drop-table -Q -h $db_host -u $db_user -p$db_password $db_name" > $tmp/$dbfilename
+		## Compress
+		nice -n 19 gzip $tmp/$dbfilename
+		## Encrypt
+		nice -n 19 gpg --encrypt --recipient $gpg_pub_email $tmp/$dbfilename.gz
+		## Copy to S3
+		aws s3 cp $s3options $tmp/$dbfilename.gz.gpg s3://$bucket/$server_name/$db_backup_folder/$domain/
+		aws s3 ls s3://$bucket/$server_name/$db_backup_folder/$domain/$dbfilename.gz.gpg
+		## Cleanup
+		rm $tmp/$dbfilename*
+
+		## Backup Files in htdocs folder
+		filename=$domain-`/bin/date -u +"%Y%m%dT%H%M%SZ"`.tgz
+		## Compress the htdocs folder. Use GZIP. xz uses too much ram/cpu for small VPS.
+		nice -n 19 tar --atime-preserve -czf $tmp/$filename --directory=/opt/easyengine/sites/$domain/app/htdocs/ .
+		## Encrypt to public key
+		nice -n 19 gpg --encrypt --recipient $gpg_pub_email $tmp/$filename
+		## Upload to S3
+		aws s3 cp $s3options $tmp/$filename.gpg s3://$bucket/$server_name/$htdoc_backup_folder/$domain/
+		aws s3 ls s3://$bucket/$server_name/$htdoc_backup_folder/$domain/$filename.gpg
+		## Cleanup
+		rm $tmp/$filename*
+
+		## Backup LetsEncrypt certs /var/lib/docker/volumes/global-nginx-proxy_{certs,confd}
+		if [ $site_lessl == Enabled ]; then
+			lefilename=$domain-letsencrypt-`/bin/date -u +"%Y%m%dT%H%M%SZ"`.tgz
+			docker exec $proxy_container bash -c "cd /etc/nginx && tar --ignore-failed-read --atime-preserve -czf /tmp/$lefilename conf.d/$domain-*.conf certs/$domain.* 2>/dev/null"
+			docker cp $proxy_container:/tmp/$lefilename $tmp/
+			nice -n 19 gpg --encrypt --recipient $gpg_pub_email $tmp/$lefilename
+			aws s3 cp $s3options $tmp/$lefilename.gpg s3://$bucket/$server_name/$le_backup_folder/$domain/
+			aws s3 ls s3://$bucket/$server_name/$le_backup_folder/$domain/$lefilename.gpg
+			rm $tmp/$lefilename.gpg
+		fi
+
+		## Move site access logs to S3
+		if ls /opt/easyengine/sites/$domain/logs/nginx/access* > /dev/null 2>&1; then
+			logfilename=$domain-access-`/bin/date -u +"%Y%m%dT%H%M%SZ"`.log
+			mv /opt/easyengine/sites/$domain/logs/nginx/access.log /opt/easyengine/sites/$domain/logs/nginx/$logfilename
+			nice -n 19 gzip /opt/easyengine/sites/$domain/logs/nginx/$logfilename
+			aws s3 mv $s3options /opt/easyengine/sites/$domain/logs/nginx/$logfilename.gz s3://$bucket/$server_name/$log_folder/$domain/
+			aws s3 ls s3://$bucket/$server_name/$log_folder/$domain/$logfilename.gz
+		fi
+	done
+
+	## Finish the restorelist file
+	aws s3 cp $s3options $tmp/$rlfilename s3://$bucket/$server_name/$restorelist_backup_folder/
+	aws s3 ls s3://$bucket/$server_name/$restorelist_backup_folder/$rlfilename
+	rm $tmp/$rlfilename
+
+
+}
+
+main "$@"
