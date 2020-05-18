@@ -9,8 +9,8 @@ export bucket=easyenginebackup
 ## S3 base folder name. Typically the server name.
 export server_name=wordpress2
 ## S3 access keys
-export aws_access_key_id=AKIASLGDRHWMKOH4HK6S
-export aws_secret_access_key=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
+export aws_access_key_id=XXXXXXXXXXXXXXXXXXXX
+export aws_secret_access_key=XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 ## Git defaults to avoid prompt during ee install
 export git_name=$default_email
