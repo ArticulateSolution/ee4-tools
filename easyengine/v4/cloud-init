@@ -2,15 +2,15 @@
 ## cloud-init start copy and paste this into cloud init script. The below () parenthesis are required. 
 (
 ## Default email or use different emails below
-export default_email=webmaster@example.com
+export default_email=rishiraaj91@gmail.com
 
 ## S3 bucket (no folders)
-export bucket=backup-bucket
+export bucket=easyenginebackup
 ## S3 base folder name. Typically the server name.
-export server_name=hosting1
+export server_name=wordpress2
 ## S3 access keys
-export aws_access_key_id=XXXXXXXXXXXXXXXXXXXX
-export aws_secret_access_key=YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+export aws_access_key_id=AKIASLGDRHWMKOH4HK6S
+export aws_secret_access_key=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
 
 ## Git defaults to avoid prompt during ee install
 export git_name=$default_email
@@ -20,37 +20,37 @@ export git_email=$default_email
 export le_email=$default_email
 
 ## GPG Public Key
-export gpg_pub_email=$default_email
+#export gpg_pub_email=$default_email
 
 #gpg --export --armor
-cat > /root/public.key <<'_EOF'
------BEGIN PGP PUBLIC KEY BLOCK-----
-X
------END PGP PUBLIC KEY BLOCK-----
-_EOF
+#cat > /root/public.key <<'_EOF'
+#-----BEGIN PGP PUBLIC KEY BLOCK-----
+#X
+#-----END PGP PUBLIC KEY BLOCK-----
+#_EOF
 
 #gpg --export-secret-key --armor
-cat > /root/private.key <<'_EOF2'
------BEGIN PGP PRIVATE KEY BLOCK-----
-X
------END PGP PRIVATE KEY BLOCK-----
-_EOF2
+#cat > /root/private.key <<'_EOF2'
+#-----BEGIN PGP PRIVATE KEY BLOCK-----
+#X
+#-----END PGP PRIVATE KEY BLOCK-----
+#_EOF2
 
 #gpg --export-ownertrust
-cat > /root/trust.key <<'_EOF3'
+#cat > /root/trust.key <<'_EOF3'
 # List of assigned trustvalues, created Sun Dec 31 23:59:59 2018 UTC
 # (Use "gpg --import-ownertrust" to restore them)
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:6:
-_EOF3
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:6:
+#_EOF3
 
 # build a quick script to import the private key & trust
-cat > /root/gpg-private <<'_EOF4'
-gpg --import --allow-secret-key /root/private.key
-gpg --import-ownertrust /root/trust.key
-_EOF4
-chmod +x /root/gpg-private
+#cat > /root/gpg-private <<'_EOF4'
+#gpg --import --allow-secret-key /root/private.key
+#gpg --import-ownertrust /root/trust.key
+#_EOF4
+#chmod +x /root/gpg-private
 
-wget -qO /root/ee4-setup-server https://raw.githubusercontent.com/microram/ee4-tools/master/ee4-setup-server && chmod +x /root/ee4-setup-server
+wget -qO /root/ee4-setup-server https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/ee4-setup-server && chmod +x /root/ee4-setup-server
 /root/ee4-setup-server
 )
 ## cloud-init end copy and paste

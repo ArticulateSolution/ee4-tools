@@ -35,22 +35,22 @@ pip install awscli
 wget -qO ee rt.cx/ee4 && sudo bash ee
 
 ## UFW firewall setup. All websites require CloudFlare proxy
-wget -qO /etc/cron.weekly/cloudflare-ufw https://raw.githubusercontent.com/microram/ee4-tools/master/cloudflare-ufw && chmod +x /etc/cron.weekly/cloudflare-ufw && sudo bash /etc/cron.weekly/cloudflare-ufw && ln -s /etc/cron.weekly/cloudflare-ufw /root/cloudflare-ufw
+#wget -qO /etc/cron.weekly/cloudflare-ufw https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/common/cloudflare-ufw/cloudflare-ufw && chmod +x /etc/cron.weekly/cloudflare-ufw && sudo bash /etc/cron.weekly/cloudflare-ufw && ln -s /etc/cron.weekly/cloudflare-ufw /root/cloudflare-ufw
 
 ## Get the site settings file
-wget -qO /root/.ee4-backup-settings.conf https://raw.githubusercontent.com/microram/ee4-tools/master/.ee4-backup-settings.conf && chmod 600 /root/.ee4-backup-settings.conf
+wget -qO /root/.ee4-backup-settings.conf https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/.ee4-backup-settings.conf && chmod 600 /root/.ee4-backup-settings.conf
 
 ## Get the backup script. Place in /etc/cron.daily/ and ln in root
-wget -qO /etc/cron.daily/ee4-backup-sites https://raw.githubusercontent.com/microram/ee4-tools/master/ee4-backup-sites && chmod +x /etc/cron.daily/ee4-backup-sites && ln -s /etc/cron.daily/ee4-backup-sites /root/ee4-backup-sites
+wget -qO /etc/cron.daily/ee4-backup-sites https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/ee4-backup-sites && chmod +x /etc/cron.daily/ee4-backup-sites && ln -s /etc/cron.daily/ee4-backup-sites /root/ee4-backup-sites
 
 ## Get the restore script. Place in /root
-wget -qO /root/ee4-restore-site https://raw.githubusercontent.com/microram/ee4-tools/master/ee4-restore-site && chmod +x /root/ee4-restore-site
+wget -qO /root/ee4-restore-site https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/ee4-restore-site && chmod +x /root/ee4-restore-site
 
 ## Get the v3 restore script. Place in /root
-wget -qO /root/ee4-restore-from-v3-site https://raw.githubusercontent.com/microram/ee4-tools/master/ee4-restore-from-v3-site && chmod +x /root/ee4-restore-from-v3-site
+wget -qO /root/ee4-restore-from-v3-site https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/ee4-restore-from-v3-site && chmod +x /root/ee4-restore-from-v3-site
 
 ## Fix up the settings file
-sed -i -e "s/gpg_pub_email=webmaster@example.com/gpg_pub_email=$gpg_pub_email/g" /root/.ee4-backup-settings.conf
+#sed -i -e "s/gpg_pub_email=webmaster@example.com/gpg_pub_email=$gpg_pub_email/g" /root/.ee4-backup-settings.conf
 sed -i -e "s/le_email=webmaster@example.com/le_email=$le_email/g" /root/.ee4-backup-settings.conf
 sed -i -e "s/bucket=backup-bucket/bucket=$bucket/g" /root/.ee4-backup-settings.conf
 sed -i -e "s/server_name=hosting1/server_name=$server_name/g" /root/.ee4-backup-settings.conf

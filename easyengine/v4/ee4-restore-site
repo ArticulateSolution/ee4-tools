@@ -91,10 +91,11 @@ function restore_htdocs {
 	fi
 
 	## Decrypt the download
-	sitefile2=${sitefile/.tgz.gpg/.tgz}
-	gpg --decrypt $tmp/$sitefile > $tmp/$sitefile2
+	#sitefile2=${sitefile/.tgz.gpg/.tgz}
+	#gpg --decrypt $tmp/$sitefile > $tmp/$sitefile2
 	## Extract the download
-	tar xf $tmp/$sitefile2 -C /opt/easyengine/sites/$domain/app/htdocs/
+	#tar xf $tmp/$sitefile2 -C /opt/easyengine/sites/$domain/app/htdocs/
+	tar xf $tmp/$sitefile -C /opt/easyengine/sites/$domain/app/htdocs/
 	## Fix file and folder permissions
 	find /opt/easyengine/sites/$domain/app/htdocs/ -type f -exec chmod 644 {} \;
 	find /opt/easyengine/sites/$domain/app/htdocs/ -type d -exec chmod 755 {} \;
@@ -108,17 +109,19 @@ function restore_db {
 	## Lookup the newest database backup
 	dbfile=`aws s3 ls s3://$bucket/$server_name/$db_backup_folder/$domain/ | awk '{print $4}' | tail -1`
 	## Build a filename without the .gpg
-	dbfile2=${dbfile/.sql.gz.gpg/.sql.gz}
+	#dbfile2=${dbfile/.sql.gz.gpg/.sql.gz}
 	## Now build a filename without the .gz
-	dbfile3=${dbfile2/.sql.gz/.sql}
+	#dbfile3=${dbfile2/.sql.gz/.sql}
+	dbfile3=${dbfile/.sql.gz/.sql}
 	## Download the newest database backup
 	if [ ! -f /opt/easyengine/sites/$domain/app/$dbfile ]; then
 		aws s3 cp $s3options s3://$bucket/$server_name/$db_backup_folder/$domain/$dbfile /opt/easyengine/sites/$domain/app/
 	fi
 	## Decrypt
-	gpg --decrypt /opt/easyengine/sites/$domain/app/$dbfile > /opt/easyengine/sites/$domain/app/$dbfile2
+	#gpg --decrypt /opt/easyengine/sites/$domain/app/$dbfile > /opt/easyengine/sites/$domain/app/$dbfile2
 	## Decompress
-	gunzip /opt/easyengine/sites/$domain/app/$dbfile2
+	#gunzip /opt/easyengine/sites/$domain/app/$dbfile2
+	gunzip /opt/easyengine/sites/$domain/app/$dbfile
 	## Restore the datbase into the container
 	ee shell $domain --command="mysql -h $db_host -u $db_user -p$db_password $db_name < ../$dbfile3"
 	rm /opt/easyengine/sites/$domain/app/$dbfile3*
