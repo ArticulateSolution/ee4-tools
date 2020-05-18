@@ -81,6 +81,7 @@ function main {
 
 	## Enable the admin tools
 	ee admin-tools enable $domain
+	ee service restart redis
 
 } #main
 
