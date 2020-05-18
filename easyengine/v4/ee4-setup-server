@@ -27,12 +27,13 @@ chmod 400 /root/.aws/credentials
 #sudo -E apt-get -qy -o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold" upgrade
 #sudo -E apt-get -qy autoclean
 
-## Install AWS CLI
-apt-get install -y python-pip
-pip install awscli
  
 ## Install EasyEngine.io v4
 wget -qO ee rt.cx/ee4 && sudo bash ee
+
+## Install AWS CLI
+apt-get install -y python-pip
+pip install awscli
 
 ## UFW firewall setup. All websites require CloudFlare proxy
 #wget -qO /etc/cron.weekly/cloudflare-ufw https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/common/cloudflare-ufw/cloudflare-ufw && chmod +x /etc/cron.weekly/cloudflare-ufw && sudo bash /etc/cron.weekly/cloudflare-ufw && ln -s /etc/cron.weekly/cloudflare-ufw /root/cloudflare-ufw
