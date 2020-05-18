@@ -36,6 +36,11 @@ function main {
 			--type=*) eetype="--type=${1#*=}"; shift 1;;
 			--ssl=*) eessl="--ssl=${1#*=}"; shift 1;;
 			--le-email=*) eelemail="--le-email=${1#*=}"; shift 1;;
+			--admin-user=*) eeadminuser="--admin-user=${1#*=}"; shift 1;;
+			--admin-pass=*) eeadminpass="--admin-pass=${1#*=}"; shift 1;;
+			--dbname=*) eedbname="--dbname=${1#*=}"; shift 1;;
+			--dbuser=*) eedbuser="--dbuser=${1#*=}"; shift 1;;
+			--dbpass=*) eedbpass="--dbpass=${1#*=}"; shift 1;;
 			--admin-email=*) eeadminemail="--admin-email=${1#*=}"; shift 1;;
 			--s3_server_name=*) server_name="${1#*=}"; shift 1;; ## Override server_name from settings file
 			--type|--ssl|--le-mail|--admin-email|--s3_server_name) echo "$1 requires an argument" >&2; exit 1;;
@@ -44,7 +49,7 @@ function main {
 			*) handle_argument "$1"; shift 1;;
 		esac
 	done
-	echo "DEBUG - :domain: $domain  :type: $eetype  :ssl: $eessl  :le-mail: $eelemail  :admin-email: $eeadminemail  :s3_server_name: $server_name  :cache: $eecache  :wildcard: $eewildcard"
+	echo "DEBUG - :domain: $domain  :type: $eetype  :ssl: $eessl  :le-mail: $eelemail  :admin-email: $eeadminemail  :s3_server_name: $server_name  :cache: $eecache  :wildcard: $eewildcard  :adminuser: $eeadminuser  :adminpass: $eeadminpass  :dbname: $eedbname  :dbuser: $eedbuser  :dbpass: $eedbpass"
 	
 	## Global LetsEncrypt email address from settings file
 	ee config set le-mail $eelemail
@@ -62,7 +67,7 @@ function main {
 	fi
 
 	## Create the site
-	ee site create $domain $eetype $eessl $eelemail $eeadminemail $eecache $eewildcard
+	ee site create $domain $eetype $eessl $eelemail $eeadminemail $eecache $eewildcard $eeadminuser $eeadminpass $eedbname $eedbuser $eedbpass
 
 	## Restore the site
 	restore_htdocs

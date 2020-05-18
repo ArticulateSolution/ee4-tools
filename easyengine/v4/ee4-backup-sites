@@ -24,10 +24,16 @@ main() {
 		site_wcssl=`ee site info $domain | grep 'Wildcard' | awk -F '|' '{print $3}' | awk '{print $1}'`
 		site_cache=`ee site info $domain | grep 'Cache' | awk -F '|' '{print $3}' | awk '{print $1}'`
 		site_email=`ee site info $domain | grep 'E-Mail' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		wp_user=`ee site info $domain | grep 'WordPress Username' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		wp_pwd=`ee site info $domain | grep 'WordPress Password' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		db_name=`ee site info $domain | grep 'DB Name' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		db_user=`ee site info $domain | grep 'DB User' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		db_pwd=`ee site info $domain | grep 'DB Password' | awk -F '|' '{print $3}' | awk '{print $1}'`
+		
 		if [ $site_lessl == Enabled ]; then opt_lessl='--ssl=le'; else opt_lessl=''; fi
 		if [ $site_wcssl == Yes ];     then opt_wcssl='--wildcard'; else opt_wcssl=''; fi
 		if [ $site_cache == Enabled ]; then opt_cache='--cache'; else opt_cache=''; fi
-		echo ./ee4-restore-site --domain=$domain --type=wp $opt_cache $opt_lessl $opt_wcssl --admin-email=$site_email --s3_server_name=$server_name >> $tmp/$rlfilename
+		echo ./ee4-restore-site --domain=$domain --type=wp $opt_cache $opt_lessl $opt_wcssl --le-email=$site_email --admin-email=$site_email --s3_server_name=$server_name --admin-user=$wp_user --admin-pass=$wp_pwd --dbname=$db_name --dbuser=$db_user --dbpass=$db_pwd >> $tmp/$rlfilename
 
 		## Backup Database
     ## determine if domain is using local or global db
