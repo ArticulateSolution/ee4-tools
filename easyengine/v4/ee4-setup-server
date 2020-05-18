@@ -42,7 +42,7 @@ pip install awscli
 wget -qO /root/.ee4-backup-settings.conf https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/.ee4-backup-settings.conf && chmod 600 /root/.ee4-backup-settings.conf
 
 ## Get the backup script. Place in /etc/cron.daily/ and ln in root
-wget -qO /etc/cron.daily/ee4-backup-sites https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/ee4-backup-sites && chmod +x /etc/cron.daily/ee4-backup-sites && ln -s /etc/cron.daily/ee4-backup-sites /root/ee4-backup-sites
+wget -qO /etc/cron.daily/ee4-backup-sites https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/ee4-backup-sites && chmod +x /etc/cron.daily/ee4-backup-sites && ln -s -f /etc/cron.daily/ee4-backup-sites /root/ee4-backup-sites
 
 ## Get the restore script. Place in /root
 wget -qO /root/ee4-restore-site https://raw.githubusercontent.com/ArticulateSolution/ee4-tools/master/easyengine/v4/ee4-restore-site && chmod +x /root/ee4-restore-site
