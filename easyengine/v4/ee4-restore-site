@@ -35,7 +35,7 @@ function main {
 			--domain=*) domain="${1#*=}"; shift 1;;
 			--type=*) eetype="--type=${1#*=}"; shift 1;;
 			--ssl=*) eessl="--ssl=${1#*=}"; shift 1;;
-			--le-email=*) eelemail="--le-email=${1#*=}"; shift 1;;
+			--le-mail=*) eelemail="--le-mail=${1#*=}"; shift 1;;
 			--admin-user=*) eeadminuser="--admin-user=${1#*=}"; shift 1;;
 			--admin-pass=*) eeadminpass="--admin-pass=${1#*=}"; shift 1;;
 			--dbname=*) eedbname="--dbname=${1#*=}"; shift 1;;
